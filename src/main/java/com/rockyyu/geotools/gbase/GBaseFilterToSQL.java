@@ -112,6 +112,7 @@ public class GBaseFilterToSQL extends FilterToSQL {
     }
     /**
      * pre-5.6 spatial functions.
+     * 
      * @param filter
      * @param e1
      * @param e2
