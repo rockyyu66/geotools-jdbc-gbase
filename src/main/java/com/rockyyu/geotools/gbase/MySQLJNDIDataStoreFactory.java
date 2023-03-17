@@ -14,9 +14,9 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package com.rockyyu.geotools.mysql;
+package com.rockyyu.geotools.gbase;
 
-import static com.rockyyu.geotools.mysql.MySQLDataStoreFactory.STORAGE_ENGINE;
+import static com.rockyyu.geotools.gbase.MySQLDataStoreFactory.STORAGE_ENGINE;
 
 import java.util.Map;
 import org.geotools.jdbc.JDBCJNDIDataStoreFactory;

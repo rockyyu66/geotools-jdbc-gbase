@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package com.rockyyu.geotools.mysql;
+package org.geotools.data.mysql;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -30,7 +30,7 @@ import org.geotools.jdbc.SQLDialect;
  * DataStoreFactory for MySQL database.
  *
  * @author David Winslow, The Open Planning Project
- * @author Nikolaos Pringouris added support for MySQL versions 5.6 (and above)
+ * @author Nikolaos Pringouris <nprigour@gmail.com> added support for MySQL versions 5.6 (and above)
  */
 public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
     /** parameter for database type */
@@ -40,13 +40,13 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
                     String.class,
                     "Type",
                     true,
-                    "mysql",
+                    "gbase",
                     Collections.singletonMap(Parameter.LEVEL, "program"));
     /** Default port number for MYSQL */
-    public static final Param PORT = new Param("port", Integer.class, "Port", true, 3306);
+    public static final Param PORT = new Param("port", Integer.class, "Port", true, 5258);
     /** Storage engine to use when creating tables */
     public static final Param STORAGE_ENGINE =
-            new Param("storage engine", String.class, "Storage Engine", false, "MyISAM");
+            new Param("storage engine", String.class, "Storage Engine", false, "GsDB");
 
     /**
      * Enhanced Spatial Support is available from MySQL version 5.6 and onward. This includes some
@@ -72,12 +72,13 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
 
     @Override
     public String getDisplayName() {
-        return "MySQL";
+        return "GBase";
     }
 
     @Override
     protected String getDriverClassName() {
-        return "com.mysql.cj.jdbc.Driver";
+        // return "com.mysql.cj.jdbc.Driver";
+        return "com.gbase.hk.jdbc.Driver";
     }
 
     @Override
@@ -87,7 +88,7 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
 
     @Override
     public String getDescription() {
-        return "MySQL Database";
+        return "GBase Database";
     }
 
     @Override
@@ -143,44 +144,61 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
 
     /**
      * check if the version of MySQL is greater than 5.6.
-     * 
-     * @param dataStore
+     *
      * @return {@code true} if the database is higher than 5.6
      */
     protected static boolean isMySqlVersion56OrAbove(JDBCDataStore dataStore) {
-        boolean isMySQLVersion56OrAbove = false;
-        try (Connection con = dataStore.getDataSource().getConnection()) {
-            int major = con.getMetaData().getDatabaseMajorVersion();
-            int minor = con.getMetaData().getDatabaseMinorVersion();
-            isMySQLVersion56OrAbove = major > 5 || (major == 5 && minor > 6);
-        } catch (SQLException | IllegalStateException e) {
-            dataStore
-                    .getLogger()
-                    .warning(
-                            "Unable to determine database version. Message: "
-                                    + e.getLocalizedMessage());
-        }
-        return isMySQLVersion56OrAbove;
+        // boolean isMySQLVersion56OrAbove = false;
+        // try (Connection con = dataStore.getDataSource().getConnection()) {
+        //     int major = con.getMetaData().getDatabaseMajorVersion();
+        //     int minor = con.getMetaData().getDatabaseMinorVersion();
+        //     isMySQLVersion56OrAbove = major > 5 || (major == 5 && minor > 6);
+        // } catch (SQLException | IllegalStateException e) {
+        //     dataStore
+        //             .getLogger()
+        //             .warning(
+        //                     "Unable to determine database version. Message: "
+        //                             + e.getLocalizedMessage());
+        // }
+        // return isMySQLVersion56OrAbove;
+        return true;
     }
     /**
      * check if the version of MySQL is 8.0 or greater. Needed to determine which syntax can be used
      * for eg. {@code ST_SRID()}
      *
-     * @param dataStore
      * @return {@code true} if the database varion is is 8.0 or greater
      */
     protected static boolean isMySqlVersion80OrAbove(JDBCDataStore dataStore) {
-        boolean isMySQLVersion80OrAbove = false;
-        try (Connection con = dataStore.getDataSource().getConnection()) {
-            int major = con.getMetaData().getDatabaseMajorVersion();
-            isMySQLVersion80OrAbove = (major >= 8);
-        } catch (SQLException | IllegalStateException e) {
-            dataStore
-                    .getLogger()
-                    .warning(
-                            "Unable to determine database version. Message: "
-                                    + e.getLocalizedMessage());
+        // boolean isMySQLVersion80OrAbove = false;
+        // try (Connection con = dataStore.getDataSource().getConnection()) {
+        //     int major = con.getMetaData().getDatabaseMajorVersion();
+        //     isMySQLVersion80OrAbove = (major >= 8);
+        // } catch (SQLException | IllegalStateException e) {
+        //     dataStore
+        //             .getLogger()
+        //             .warning(
+        //                     "Unable to determine database version. Message: "
+        //                             + e.getLocalizedMessage());
+        // }
+        // return isMySQLVersion80OrAbove;
+        return false;
+    }
+
+    @Override
+    protected String getJDBCUrl(Map<String, ?> params) throws IOException {
+        String host = (String)HOST.lookUp(params);
+        Integer port = (Integer)PORT.lookUp(params);
+        String db = (String)DATABASE.lookUp(params);
+        String url = "jdbc:" + this.getDatabaseID() + "://" + host;
+        if (port != null) {
+            url = url + ":" + port;
         }
-        return isMySQLVersion80OrAbove;
+
+        if (db != null) {
+            url = url + "/" + db;
+        }
+        url = url + "?nullCatalogMeansCurrent=true&characterEncoding=UTF-8&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true&useServerPrepStmts=false&serverTimezone=Asia/Shanghai";
+        return url;
     }
 }

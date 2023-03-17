@@ -1,4 +1,4 @@
-package com.rockyyu.geotools.mysql;
+package com.rockyyu.geotools.gbase;
 
 import java.util.ServiceLoader;
 import org.geotools.data.DataStoreFactorySpi;
