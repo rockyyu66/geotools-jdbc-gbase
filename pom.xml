@@ -6,7 +6,7 @@
 
   <groupId>com.rockyyu</groupId>
   <artifactId>geotools-jdbc-gbase</artifactId>
-  <version>27.2.1</version>
+  <version>27.2.2</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -25,9 +25,9 @@
     </dependency>
   </dependencies>
 
-  <name>Geotools MySQL DataStore</name>
-  <description>Geotools jdbc plugin for mysql database</description>
-  <url>https://github.com/rockyyu66/geotools-jdbc-mysql</url>
+  <name>Geotools GBase DataStore</name>
+  <description>Geotools jdbc plugin for gbase database</description>
+  <url>https://github.com/rockyyu66/geotools-jdbc-gbase</url>
 
   <licenses>
     <license>
@@ -45,10 +45,10 @@
   </developers>
 
   <scm>
-    <connection>https://github.com/rockyyu66/geotools-jdbc-mysql.git</connection>
-    <developerConnection>https://github.com/rockyyu66/geotools-jdbc-mysql.git</developerConnection>
+    <connection>https://github.com/rockyyu66/geotools-jdbc-gbase.git</connection>
+    <developerConnection>https://github.com/rockyyu66/geotools-jdbc-gbase.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/rockyyu66/geotools-jdbc-mysql</url>
+    <url>https://github.com/rockyyu66/geotools-jdbc-gbase</url>
   </scm>
 
   <distributionManagement>
