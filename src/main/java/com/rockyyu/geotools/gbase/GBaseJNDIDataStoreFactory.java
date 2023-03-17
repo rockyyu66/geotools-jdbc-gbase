@@ -16,7 +16,7 @@
  */
 package com.rockyyu.geotools.gbase;
 
-import static com.rockyyu.geotools.gbase.MySQLDataStoreFactory.STORAGE_ENGINE;
+import static com.rockyyu.geotools.gbase.GBaseDataStoreFactory.STORAGE_ENGINE;
 
 import java.util.Map;
 import org.geotools.jdbc.JDBCJNDIDataStoreFactory;
@@ -28,10 +28,10 @@ import org.geotools.jdbc.JDBCJNDIDataStoreFactory;
  */
 // temporary work around, the factory parameters map will be fixed separately
 @SuppressWarnings("unchecked")
-public class MySQLJNDIDataStoreFactory extends JDBCJNDIDataStoreFactory {
+public class GBaseJNDIDataStoreFactory extends JDBCJNDIDataStoreFactory {
 
-    public MySQLJNDIDataStoreFactory() {
-        super(new MySQLDataStoreFactory());
+    public GBaseJNDIDataStoreFactory() {
+        super(new GBaseDataStoreFactory());
     }
 
     @Override

@@ -49,12 +49,12 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Delegate for {@link MySQLDialectBasic} and {@link MySQLDialectPrepared} which implements the
+ * Delegate for {@link GBaseDialectBasic} and {@link GBaseDialectPrepared} which implements the
  * common part of the api.
  *
  * @author Justin Deoliveira, OpenGEO
  */
-public class MySQLDialect extends SQLDialect {
+public class GBaseDialect extends SQLDialect {
     /** mysql spatial types */
     protected Integer POINT = Integer.valueOf(2001);
 
@@ -77,7 +77,7 @@ public class MySQLDialect extends SQLDialect {
     /** flag indicating we are using MySQL v8.0 or higher. */
     protected boolean isMySqlVersion80OrAbove;
 
-    public MySQLDialect(JDBCDataStore dataStore) {
+    public GBaseDialect(JDBCDataStore dataStore) {
         super(dataStore);
     }
 

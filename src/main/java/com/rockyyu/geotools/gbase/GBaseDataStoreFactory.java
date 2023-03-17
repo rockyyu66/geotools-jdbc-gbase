@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.mysql;
+package com.rockyyu.geotools.gbase;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -32,7 +32,7 @@ import org.geotools.jdbc.SQLDialect;
  * @author David Winslow, The Open Planning Project
  * @author Nikolaos Pringouris <nprigour@gmail.com> added support for MySQL versions 5.6 (and above)
  */
-public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
+public class GBaseDataStoreFactory extends JDBCDataStoreFactory {
     /** parameter for database type */
     public static final Param DBTYPE =
             new Param(
@@ -67,7 +67,7 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
     @Override
     protected SQLDialect createSQLDialect(JDBCDataStore dataStore) {
         // return new MySQLDialectPrepared(dataStore);
-        return new MySQLDialectBasic(dataStore, enhancedSpatialSupport);
+        return new GBaseDialectBasic(dataStore, enhancedSpatialSupport);
     }
 
     @Override
@@ -77,7 +77,6 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
 
     @Override
     protected String getDriverClassName() {
-        // return "com.mysql.cj.jdbc.Driver";
         return "com.gbase.hk.jdbc.Driver";
     }
 
@@ -127,15 +126,15 @@ public class MySQLDataStoreFactory extends JDBCDataStoreFactory {
         }
 
         SQLDialect dialect = dataStore.getSQLDialect();
-        if (dialect instanceof MySQLDialectBasic) {
-            ((MySQLDialectBasic) dialect).setStorageEngine(storageEngine);
-            ((MySQLDialectBasic) dialect).setUsePreciseSpatialOps(enhancedSpatialSupport);
-            ((MySQLDialectBasic) dialect)
+        if (dialect instanceof GBaseDialectBasic) {
+            ((GBaseDialectBasic) dialect).setStorageEngine(storageEngine);
+            ((GBaseDialectBasic) dialect).setUsePreciseSpatialOps(enhancedSpatialSupport);
+            ((GBaseDialectBasic) dialect)
                     .setMySqlVersion80OrAbove(this.isMySqlVersion80OrAbove(dataStore));
         } else {
-            ((MySQLDialectPrepared) dialect).setStorageEngine(storageEngine);
-            ((MySQLDialectPrepared) dialect).setUsePreciseSpatialOps(enhancedSpatialSupport);
-            ((MySQLDialectPrepared) dialect)
+            ((GBaseDialectPrepared) dialect).setStorageEngine(storageEngine);
+            ((GBaseDialectPrepared) dialect).setUsePreciseSpatialOps(enhancedSpatialSupport);
+            ((GBaseDialectPrepared) dialect)
                     .setMySqlVersion80OrAbove(this.isMySqlVersion80OrAbove(dataStore));
         }
 

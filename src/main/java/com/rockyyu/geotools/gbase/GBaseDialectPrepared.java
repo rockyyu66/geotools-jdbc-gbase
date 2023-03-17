@@ -2,7 +2,7 @@
  *    GeoTools - The Open Source Java GIS Toolkit
  *    http://geotools.org
  *
- *    (C) 2002-2008, Open Source Geospatial Foundation (OSGeo)
+ *    (C) 2002-2015, Open Source Geospatial Foundation (OSGeo)
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -18,40 +18,37 @@ package com.rockyyu.geotools.gbase;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.Map;
-import org.geotools.data.jdbc.FilterToSQL;
-import org.geotools.jdbc.BasicSQLDialect;
 import org.geotools.jdbc.JDBCDataStore;
+import org.geotools.jdbc.PreparedStatementSQLDialect;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.io.ParseException;
-import org.locationtech.jts.io.WKTReader;
-import org.locationtech.jts.io.WKTWriter;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.GeometryDescriptor;
 
 /**
- * MySQL database dialect based on basic (non-prepared) statements.
+ * MySQL database dialect based on prepared statements.
  *
  * @author Justin Deoliveira, OpenGEO
- * @author Nikolaos Pringouris added support for MySQL versions 5.6 (and above)
  */
-public class MySQLDialectBasic extends BasicSQLDialect {
+public class GBaseDialectPrepared extends PreparedStatementSQLDialect {
 
-    MySQLDialect delegate;
+    GBaseDialect delegate;
 
-    public MySQLDialectBasic(JDBCDataStore dataStore) {
+    public GBaseDialectPrepared(JDBCDataStore dataStore) {
         this(dataStore, false);
     }
 
-    public MySQLDialectBasic(JDBCDataStore dataStore, boolean usePreciseSpatialOps) {
+    public GBaseDialectPrepared(JDBCDataStore dataStore, boolean usePreciseSpatialOps) {
         super(dataStore);
-        delegate = new MySQLDialect(dataStore);
+        delegate = new GBaseDialect(dataStore);
         delegate.setUsePreciseSpatialOps(usePreciseSpatialOps);
     }
 
@@ -104,20 +101,15 @@ public class MySQLDialectBasic extends BasicSQLDialect {
         delegate.encodeColumnName(prefix, raw, sql);
     }
 
-    public void encodeGeometryColumn(
-            GeometryDescriptor gatt, String prefix, int srid, StringBuffer sql) {
-        delegate.encodeColumnName(prefix, gatt.getLocalName(), sql);
+    @Override
+    public void encodeColumnType(String sqlTypeName, StringBuffer sql) {
+        delegate.encodeColumnType(sqlTypeName, sql);
     }
 
     @Override
     public void encodeGeometryColumn(
             GeometryDescriptor gatt, String prefix, int srid, Hints hints, StringBuffer sql) {
         delegate.encodeGeometryColumn(gatt, prefix, 4326, hints, sql);
-    }
-
-    @Override
-    public void encodeColumnType(String sqlTypeName, StringBuffer sql) {
-        delegate.encodeColumnType(sqlTypeName, sql);
     }
 
     @Override
@@ -181,55 +173,6 @@ public class MySQLDialectBasic extends BasicSQLDialect {
     }
 
     @Override
-    public void encodeGeometryValue(Geometry value, int dimension, int srid, StringBuffer sql)
-            throws IOException {
-        srid = 4326;
-        if (value != null) {
-            if (delegate.usePreciseSpatialOps) {
-                sql.append("ST_GeomFromText('");
-                // HACK; mysql 8 will throw a MysqlDataTruncation exception if srid == -1 which
-                // happens when JDBCDataStore#getDescriptorSRID(AttributeDescriptor) can't find the
-                // srid in the attribute descriptor:
-                // com.mysql.cj.jdbc.exceptions.MysqlDataTruncation: Data truncation: SRID value is
-                // out of range in 'st_geomfromtext'
-                if (srid < 0) srid = 0;
-            } else {
-                sql.append("GeomFromText('");
-            }
-            sql.append(new WKTWriter().write(value));
-            sql.append("', ").append(srid).append(")");
-        } else {
-            sql.append("NULL");
-        }
-    }
-
-    @Override
-    public Geometry decodeGeometryValue(
-            GeometryDescriptor descriptor,
-            ResultSet rs,
-            String column,
-            GeometryFactory factory,
-            Connection cx,
-            Hints hints)
-            throws IOException, SQLException {
-        if (!descriptor.getName().toString().equals(column)) {
-            return null;
-        }
-
-        // byte[] bytes = rs.getBytes(column);
-        // if (bytes == null) {
-        //     return null;
-        // }
-
-        try {
-            return new WKTReader(factory).read(rs.getString(column));
-        } catch (ParseException e) {
-            String msg = "Error decoding wkb " + column;
-            throw (IOException) new IOException(msg).initCause(e);
-        }
-    }
-
-    @Override
     public void encodeGeometryEnvelope(String tableName, String geometryColumn, StringBuffer sql) {
         delegate.encodeGeometryEnvelope(tableName, geometryColumn, sql);
     }
@@ -241,6 +184,52 @@ public class MySQLDialectBasic extends BasicSQLDialect {
     }
 
     @Override
+    public Geometry decodeGeometryValue(
+            GeometryDescriptor descriptor,
+            ResultSet rs,
+            String column,
+            GeometryFactory factory,
+            Connection cx,
+            Hints hints)
+            throws IOException, SQLException {
+        return delegate.decodeGeometryValue(descriptor, rs, column, factory, cx, hints);
+    }
+
+    //
+    // prepared statement api
+    //
+    @Override
+    public void prepareGeometryValue(
+            Class<? extends Geometry> gClass,
+            int dimension,
+            int srid,
+            Class binding,
+            StringBuffer sql) {
+        if (gClass != null) {
+            if (delegate.usePreciseSpatialOps) {
+                sql.append("ST_GeometryFromWKT(?)");
+            } else {
+                sql.append("GeomFromWKT(?)");
+            }
+        } else {
+            super.prepareGeometryValue(gClass, dimension, 4326, binding, sql);
+        }
+    }
+
+    @Override
+    public void setGeometryValue(
+            Geometry g, int dimension, int srid, Class binding, PreparedStatement ps, int column)
+            throws SQLException {
+        if (g != null) {
+            // ps.setBytes(column, new WKBWriter(dimension).write(g));
+            // ps.setString(column, new WKTWriter(dimension).write(g));
+            ps.setString(column, g.toText());
+        } else {
+            ps.setNull(column, Types.OTHER);
+        }
+    }
+
+    @Override
     public boolean isLimitOffsetSupported() {
         return delegate.isLimitOffsetSupported();
     }
@@ -248,11 +237,6 @@ public class MySQLDialectBasic extends BasicSQLDialect {
     @Override
     public void applyLimitOffset(StringBuffer sql, int limit, int offset) {
         delegate.applyLimitOffset(sql, limit, offset);
-    }
-
-    @Override
-    public FilterToSQL createFilterToSQL() {
-        return new MySQLFilterToSQL(delegate.getUsePreciseSpatialOps());
     }
 
     @Override
